@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Super Pacamara Bros - Get your Xmas BOX!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <!-- 画面全体レイアウト -->
+    <div id="game-wrapper">
+      <!-- 上：Phaser のゲーム領域（canvas がここに入る） -->
+      <div id="game-container"></div>
+
+      <!-- 下：スマホ用タッチボタン -->
+      <div id="touch-ui">
+        <button id="btn-left" type="button" aria-label="左に移動">←</button>
+        <button id="btn-right" type="button" aria-label="右に移動">→</button>
+        <button id="btn-jump" type="button" aria-label="ジャンプ">↑</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
