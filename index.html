@@ -1,21 +1,28 @@
 <!doctype html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Super Pacamara Bros - Get your Xmas BOX!</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="/style.css" />
-  </head>
-  <body>
-    <!-- 画面全体レイアウト -->
-    <div id="game-wrapper">
-      <!-- 上：Phaser のゲーム領域（canvas がここに入る） -->
-      <div id="game-container"></div>
 
-      <!-- 下：スマホ用タッチボタン -->
+<head>
+  <meta charset="UTF-8" />
+  <title>Super Pacamara Bros - Get your Xmas BOX!</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Pacamara" />
+</head>
 
-    </div>
+<body>
+  <!-- 画面全体レイアウト -->
+  <div id="game-wrapper">
+    <!-- 上：Phaser のゲーム領域（canvas がここに入る） -->
+    <div id="game-container"></div>
 
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+    <!-- 下：スマホ用タッチボタン -->
+
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>

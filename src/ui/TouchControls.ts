@@ -12,99 +12,115 @@ export class TouchControls {
   public rightPressed = false;
   public jumpPressed = false;
 
+  // スライド操作用の状態管理
+  private movePointerId: number | null = null;
+  private moveStartX = 0;
+
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
   }
 
   create() {
     // PC (デスクトップ) の場合は表示しない
-    // ※デバッグ時はここをコメントアウトするとPCでも表示確認できます
     if (this.scene.sys.game.device.os.desktop) {
       return;
     }
 
     const { width, height } = this.scene.scale;
 
-    // ボタン設定
-    const buttonRadius = 40; // 半径
-    const padding = 60;      // 画面端からの距離
+    // --- ガイド表示（見た目だけ） ---
+    const buttonRadius = 40;
+    const padding = 60;
     const color = 0xffffff;
-    const alpha = 0.3;       // 半透明
+    const alpha = 0.3;
 
-    // --- 左ボタン (←) ---
-    const leftX = padding;
-    const leftY = height - padding;
+    // 左ガイド
+    this.scene.add.circle(padding, height - padding, buttonRadius, color, alpha)
+      .setScrollFactor(0).setDepth(100);
+    this.scene.add.text(padding, height - padding, "←", { fontSize: "40px", color: "#ffffff" })
+      .setScrollFactor(0).setDepth(101).setOrigin(0.5);
 
-    const leftBtn = this.scene.add.circle(leftX, leftY, buttonRadius, color, alpha)
+    // 右ガイド
+    this.scene.add.circle(padding + buttonRadius * 2 + 20, height - padding, buttonRadius, color, alpha)
+      .setScrollFactor(0).setDepth(100);
+    this.scene.add.text(padding + buttonRadius * 2 + 20, height - padding, "→", { fontSize: "40px", color: "#ffffff" })
+      .setScrollFactor(0).setDepth(101).setOrigin(0.5);
+
+    // ジャンプガイド
+    this.scene.add.circle(width - padding, height - padding, buttonRadius, 0x22c55e, alpha)
+      .setScrollFactor(0).setDepth(100);
+    this.scene.add.text(width - padding, height - padding, "J", { fontSize: "40px", color: "#ffffff" })
+      .setScrollFactor(0).setDepth(101).setOrigin(0.5);
+
+
+    // --- 判定エリア（不可視） ---
+
+    // 1. 移動エリア（画面左半分）
+    const moveZone = this.scene.add.zone(0, 0, width / 2, height)
+      .setOrigin(0, 0)
       .setScrollFactor(0)
-      .setDepth(100)
+      .setDepth(200) // 最前面
       .setInteractive();
 
-    // 矢印アイコン（簡易的にテキストで）
-    this.scene.add.text(leftX, leftY, "←", { fontSize: "40px", color: "#ffffff" })
+    // 2. ジャンプエリア（画面右半分）
+    const jumpZone = this.scene.add.zone(width / 2, 0, width / 2, height)
+      .setOrigin(0, 0)
       .setScrollFactor(0)
-      .setDepth(101)
-      .setOrigin(0.5);
-
-    // --- 右ボタン (→) ---
-    const rightX = padding + buttonRadius * 2 + 20; // 左ボタンの隣
-    const rightY = height - padding;
-
-    const rightBtn = this.scene.add.circle(rightX, rightY, buttonRadius, color, alpha)
-      .setScrollFactor(0)
-      .setDepth(100)
+      .setDepth(200)
       .setInteractive();
 
-    this.scene.add.text(rightX, rightY, "→", { fontSize: "40px", color: "#ffffff" })
-      .setScrollFactor(0)
-      .setDepth(101)
-      .setOrigin(0.5);
+    // --- イベント処理 ---
 
-    // --- ジャンプボタン (JUMP) ---
-    const jumpX = width - padding;
-    const jumpY = height - padding;
-    const jumpColor = 0x22c55e; // 緑色
-
-    const jumpBtn = this.scene.add.circle(jumpX, jumpY, buttonRadius, jumpColor, alpha)
-      .setScrollFactor(0)
-      .setDepth(100)
-      .setInteractive();
-
-    this.scene.add.text(jumpX, jumpY, "J", { fontSize: "40px", color: "#ffffff" })
-      .setScrollFactor(0)
-      .setDepth(101)
-      .setOrigin(0.5);
-
-    // --- イベント登録 ---
-    this.setupButton(leftBtn,
-      () => this.leftPressed = true,
-      () => this.leftPressed = false
-    );
-
-    this.setupButton(rightBtn,
-      () => this.rightPressed = true,
-      () => this.rightPressed = false
-    );
-
-    this.setupButton(jumpBtn,
-      () => this.jumpPressed = true,
-      () => this.jumpPressed = false
-    );
-  }
-
-  private setupButton(obj: Phaser.GameObjects.GameObject, onDown: () => void, onUp: () => void) {
-    // タッチ開始
-    obj.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      onDown();
+    // 移動ロジック
+    moveZone.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      this.movePointerId = pointer.id;
+      this.updateMoveDirection(pointer.x);
     });
 
-    // タッチ終了・キャンセル・範囲外へ出た場合
-    const clear = () => {
-      onUp();
+    moveZone.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.id === this.movePointerId) {
+        this.updateMoveDirection(pointer.x);
+      }
+    });
+
+    const resetMove = (pointer: Phaser.Input.Pointer) => {
+      if (pointer.id === this.movePointerId) {
+        this.movePointerId = null;
+        this.leftPressed = false;
+        this.rightPressed = false;
+      }
     };
 
-    obj.on("pointerup", clear);
-    obj.on("pointerout", clear);
-    obj.on("pointercancel", clear);
+    moveZone.on("pointerup", resetMove);
+    moveZone.on("pointerout", resetMove); // ゾーンから出たらリセット
+    moveZone.on("pointercancel", resetMove);
+
+
+    // ジャンプロジック
+    jumpZone.on("pointerdown", () => {
+      this.jumpPressed = true;
+    });
+
+    const resetJump = () => {
+      this.jumpPressed = false;
+    };
+
+    jumpZone.on("pointerup", resetJump);
+    jumpZone.on("pointerout", resetJump);
+    jumpZone.on("pointercancel", resetJump);
+  }
+
+  // X座標に基づいて移動方向を更新
+  private updateMoveDirection(x: number) {
+    // 画面左端から150pxあたりを境界線とする（ガイドボタンの間くらい）
+    const threshold = 150;
+
+    if (x < threshold) {
+      this.leftPressed = true;
+      this.rightPressed = false;
+    } else {
+      this.leftPressed = false;
+      this.rightPressed = true;
+    }
   }
 }
