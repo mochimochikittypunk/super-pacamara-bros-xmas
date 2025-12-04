@@ -43,12 +43,15 @@ export class TitleScene extends Phaser.Scene {
       this.scene.start("LogoScene");
     });
 
-    // ▼ デバッグ用：ステージ直接選択ボタン
+    // ▼ デバッグ用：ステージ直接選択ボタン（初期非表示）
+    const debugElements: (Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle)[] = [];
     const debugY = height / 2 + 130;
-    this.add.text(width / 2, debugY, "[ Debug: Jump to Stage ]", {
+
+    const debugLabel = this.add.text(width / 2, debugY, "[ Debug: Jump to Stage ]", {
       fontSize: "16px",
       color: "#9ca3af"
     }).setOrigin(0.5);
+    debugElements.push(debugLabel);
 
     const stages = [
       { label: "1", scene: "GameScene" },
@@ -63,13 +66,27 @@ export class TitleScene extends Phaser.Scene {
       const btn = this.add.rectangle(x, y, 60, 40, 0x4b5563)
         .setInteractive({ useHandCursor: true });
 
-      this.add.text(x, y, st.label, { fontSize: "20px", color: "#ffffff" })
+      const txt = this.add.text(x, y, st.label, { fontSize: "20px", color: "#ffffff" })
         .setOrigin(0.5);
 
       btn.on("pointerdown", () => {
-        // デバッグ用なので直接シーンを開始
         this.scene.start(st.scene);
       });
+
+      debugElements.push(btn, txt);
+    });
+
+    // 初期状態は非表示
+    debugElements.forEach(el => el.setVisible(false));
+
+    // ▼ デバッグ表示トグルボタン
+    const toggleBtn = this.add.text(width - 40, height - 40, "⚙️", { fontSize: "24px" })
+      .setInteractive({ useHandCursor: true })
+      .setOrigin(0.5);
+
+    toggleBtn.on("pointerdown", () => {
+      const isVisible = !debugElements[0].visible;
+      debugElements.forEach(el => el.setVisible(isVisible));
     });
   }
 }

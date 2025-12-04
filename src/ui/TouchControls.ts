@@ -17,69 +17,94 @@ export class TouchControls {
   }
 
   create() {
-    // PC では pointer: fine なので、CSS側で #touch-ui は非表示。
-    const container = document.getElementById("touch-ui");
-    if (!container) {
-      // 見つからない場合は何もしない（PCなど）
+    // PC (デスクトップ) の場合は表示しない
+    // ※デバッグ時はここをコメントアウトするとPCでも表示確認できます
+    if (this.scene.sys.game.device.os.desktop) {
       return;
     }
 
-    const leftBtn = document.getElementById("btn-left");
-    const rightBtn = document.getElementById("btn-right");
-    const jumpBtn = document.getElementById("btn-jump");
+    const { width, height } = this.scene.scale;
 
-    const attachButton = (
-      el: HTMLElement | null,
-      onDown: () => void,
-      onUp: () => void
-    ) => {
-      if (!el) return;
+    // ボタン設定
+    const buttonRadius = 40; // 半径
+    const padding = 60;      // 画面端からの距離
+    const color = 0xffffff;
+    const alpha = 0.3;       // 半透明
 
-      // pointer イベント（モバイル・PC両対応）
-      el.addEventListener("pointerdown", (ev) => {
-        ev.preventDefault();
-        onDown();
-      });
+    // --- 左ボタン (←) ---
+    const leftX = padding;
+    const leftY = height - padding;
 
-      const clear = (ev: Event) => {
-        ev.preventDefault();
-        onUp();
-      };
+    const leftBtn = this.scene.add.circle(leftX, leftY, buttonRadius, color, alpha)
+      .setScrollFactor(0)
+      .setDepth(100)
+      .setInteractive();
 
-      el.addEventListener("pointerup", clear);
-      el.addEventListener("pointerleave", clear);
-      el.addEventListener("pointercancel", clear);
-      el.addEventListener("pointerout", clear);
+    // 矢印アイコン（簡易的にテキストで）
+    this.scene.add.text(leftX, leftY, "←", { fontSize: "40px", color: "#ffffff" })
+      .setScrollFactor(0)
+      .setDepth(101)
+      .setOrigin(0.5);
+
+    // --- 右ボタン (→) ---
+    const rightX = padding + buttonRadius * 2 + 20; // 左ボタンの隣
+    const rightY = height - padding;
+
+    const rightBtn = this.scene.add.circle(rightX, rightY, buttonRadius, color, alpha)
+      .setScrollFactor(0)
+      .setDepth(100)
+      .setInteractive();
+
+    this.scene.add.text(rightX, rightY, "→", { fontSize: "40px", color: "#ffffff" })
+      .setScrollFactor(0)
+      .setDepth(101)
+      .setOrigin(0.5);
+
+    // --- ジャンプボタン (JUMP) ---
+    const jumpX = width - padding;
+    const jumpY = height - padding;
+    const jumpColor = 0x22c55e; // 緑色
+
+    const jumpBtn = this.scene.add.circle(jumpX, jumpY, buttonRadius, jumpColor, alpha)
+      .setScrollFactor(0)
+      .setDepth(100)
+      .setInteractive();
+
+    this.scene.add.text(jumpX, jumpY, "J", { fontSize: "40px", color: "#ffffff" })
+      .setScrollFactor(0)
+      .setDepth(101)
+      .setOrigin(0.5);
+
+    // --- イベント登録 ---
+    this.setupButton(leftBtn,
+      () => this.leftPressed = true,
+      () => this.leftPressed = false
+    );
+
+    this.setupButton(rightBtn,
+      () => this.rightPressed = true,
+      () => this.rightPressed = false
+    );
+
+    this.setupButton(jumpBtn,
+      () => this.jumpPressed = true,
+      () => this.jumpPressed = false
+    );
+  }
+
+  private setupButton(obj: Phaser.GameObjects.GameObject, onDown: () => void, onUp: () => void) {
+    // タッチ開始
+    obj.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      onDown();
+    });
+
+    // タッチ終了・キャンセル・範囲外へ出た場合
+    const clear = () => {
+      onUp();
     };
 
-    attachButton(
-      leftBtn,
-      () => {
-        this.leftPressed = true;
-      },
-      () => {
-        this.leftPressed = false;
-      }
-    );
-
-    attachButton(
-      rightBtn,
-      () => {
-        this.rightPressed = true;
-      },
-      () => {
-        this.rightPressed = false;
-      }
-    );
-
-    attachButton(
-      jumpBtn,
-      () => {
-        this.jumpPressed = true;
-      },
-      () => {
-        this.jumpPressed = false;
-      }
-    );
+    obj.on("pointerup", clear);
+    obj.on("pointerout", clear);
+    obj.on("pointercancel", clear);
   }
 }

@@ -10,16 +10,21 @@ body {
 }
 
 /* 画面全体：上がゲーム、下がボタンバー */
+/* 画面全体：ゲームのみ */
 #game-wrapper {
   width: 100vw;
   height: 100dvh; /* 実際に見えている高さベース */
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* スクロール防止 */
+  background: #000;
 }
 
-/* ゲーム領域（上側） */
+/* ゲーム領域 */
 #game-container {
-  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,47 +35,6 @@ canvas {
   display: block;
   max-width: 100%;
   max-height: 100%;
-}
-
-/* タッチボタンバー（下側） */
-#touch-ui {
-  flex: 0 0 90px;
-  padding: 8px 16px;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  gap: 16px;
-  background: #020617;
-  border-top: 1px solid #1f2937;
-}
-
-/* 各ボタンの見た目 */
-#touch-ui button {
-  flex: 1 1 auto;
-  max-width: 120px;
-  height: 60px;
-  border-radius: 9999px;
-  border: none;
-  background: #0f172a;
-  color: #e5e7eb;
-  font-size: 24px; /* 矢印を大きく見せる */
-  font-weight: 600;
-
-  /* ★ 長押しでテキスト選択・コピーが出ないようにする */
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
-
-/* JUMP(↑) だけちょっと目立たせる */
-#btn-jump {
-  background: #22c55e;
-  color: #022c22;
-}
-
-/* PC（マウス）向け：タッチUIは非表示 */
-@media (pointer: fine) {
-  #touch-ui {
-    display: none;
-  }
+  /* アスペクト比を維持しつつ最大化 */
+  object-fit: contain; 
 }
