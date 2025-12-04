@@ -15,6 +15,8 @@ export class TouchControls {
   // スライド操作用の状態管理
   private movePointerId: number | null = null;
   private moveStartX = 0;
+  // ジャンプ操作用の状態管理（追加）
+  private jumpPointerId: number | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -25,6 +27,9 @@ export class TouchControls {
     if (this.scene.sys.game.device.os.desktop) {
       return;
     }
+
+    // ★ マルチタッチを有効化（デフォルトは2本指までかもしれないので増やす）
+    this.scene.input.addPointer(3);
 
     const { width, height } = this.scene.scale;
 
@@ -73,8 +78,11 @@ export class TouchControls {
 
     // 移動ロジック
     moveZone.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      this.movePointerId = pointer.id;
-      this.updateMoveDirection(pointer.x);
+      // 既に移動操作中の指がある場合は無視（あるいは上書き）
+      if (this.movePointerId === null) {
+        this.movePointerId = pointer.id;
+        this.updateMoveDirection(pointer.x);
+      }
     });
 
     moveZone.on("pointermove", (pointer: Phaser.Input.Pointer) => {
@@ -97,12 +105,19 @@ export class TouchControls {
 
 
     // ジャンプロジック
-    jumpZone.on("pointerdown", () => {
-      this.jumpPressed = true;
+    jumpZone.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      // 既にジャンプ操作中の指がある場合は無視
+      if (this.jumpPointerId === null) {
+        this.jumpPointerId = pointer.id;
+        this.jumpPressed = true;
+      }
     });
 
-    const resetJump = () => {
-      this.jumpPressed = false;
+    const resetJump = (pointer: Phaser.Input.Pointer) => {
+      if (pointer.id === this.jumpPointerId) {
+        this.jumpPointerId = null;
+        this.jumpPressed = false;
+      }
     };
 
     jumpZone.on("pointerup", resetJump);
