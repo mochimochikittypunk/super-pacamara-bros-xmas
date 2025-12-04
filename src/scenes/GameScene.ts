@@ -63,7 +63,7 @@ export class GameScene extends Phaser.Scene {
 
     // トゲ・豆（Block Land）
     this.load.image("spike", "/assets/spike.png");
-    this.load.image("bean", "/assets/bean.png");
+    this.load.image("bean", "/assets/coffee_bean.png");
 
     // ゴール（Block Land から切り出したゴール用ブロック）
     this.load.image("tree", "/assets/tree.png");
