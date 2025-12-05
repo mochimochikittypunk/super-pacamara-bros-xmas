@@ -56,11 +56,12 @@ export class TitleScene extends Phaser.Scene {
     const stages = [
       { label: "1", scene: "GameScene" },
       { label: "2", scene: "GameScene2" },
-      { label: "3", scene: "GameScene3" }
+      { label: "3", scene: "GameScene3" },
+      { label: "4", scene: "GameScene4" }
     ];
 
     stages.forEach((st, index) => {
-      const x = width / 2 + (index - 1) * 80; // 中央、左、右に配置
+      const x = width / 2 - 80 + index * 60; // 4つ並ぶので間隔と開始位置を調整
       const y = debugY + 40;
 
       const btn = this.add.rectangle(x, y, 60, 40, 0x4b5563)

@@ -71,6 +71,8 @@ export class GameScene extends Phaser.Scene {
     // 敵（遅い／速い）
     this.load.image("enemySlow", "/assets/enemy_slow.png");
     this.load.image("enemyFast", "/assets/enemy_fast.png");
+    this.load.image("cloud", "/assets/cloud.png"); // ★ 雲画像
+    this.load.image("mountain", "/assets/snow_mountain.png"); // ★ 山画像（雪山）
 
     // ★ BGM 読み込み（追加）
     this.load.audio("bgmMain", "/assets/bgm_main.mp3");
@@ -87,19 +89,17 @@ export class GameScene extends Phaser.Scene {
     // ▼ 背景（丘と雲）を追加：手前のオブジェクトよりゆっくりスクロールさせる
     const bgObjects: Phaser.GameObjects.GameObject[] = [];
 
-    // 丘（手前）
-    bgObjects.push(
-      this.add
-        .ellipse(300, height - 40, 300, 120, 0x16a34a) // x, y, 幅, 高さ, 色
-        .setScrollFactor(0.4) // カメラに対する動きの速さ（小さいほど遠くに見える）
-    );
+    // ★ 山（画像を使用・疎らに配置）
+    // "ちょこん"とした山を表現するため、間隔を広くし、少しランダムに配置
+    for (let x = 200; x < this.levelWidth; x += Phaser.Math.Between(800, 1200)) {
+      const mountain = this.add.image(x, height + 50, "mountain") // 少し沈める
+        .setOrigin(0.5, 1) // 下中央基準
+        .setScale(0.2) // さらに少し小さく
+        .setScrollFactor(0.15) // より遠景としてゆっくり動かす
+        .setDepth(-20);
 
-    // 丘（奥）
-    bgObjects.push(
-      this.add
-        .ellipse(900, height - 50, 400, 160, 0x166534)
-        .setScrollFactor(0.4)
-    );
+      bgObjects.push(mountain);
+    }
 
     // ★ 背景テキスト追加
     const promoText = "Salvador Coffeeのクリスマスブレンド ”PRESS IT PRESS 2025” 好評 発売中 !!";
@@ -116,36 +116,16 @@ export class GameScene extends Phaser.Scene {
         .setOrigin(0, 0.5);
     }
 
-    // 雲その1
-    bgObjects.push(
-      this.add
-        .ellipse(200, 80, 80, 40, 0xffffff)
-        .setScrollFactor(0.2)
-    );
-    bgObjects.push(
-      this.add
-        .ellipse(240, 70, 60, 30, 0xffffff)
-        .setScrollFactor(0.2)
-    );
-
-    // 雲その2
-    bgObjects.push(
-      this.add
-        .ellipse(600, 100, 90, 45, 0xffffff)
-        .setScrollFactor(0.2)
-    );
-    bgObjects.push(
-      this.add
-        .ellipse(650, 90, 70, 35, 0xffffff)
-        .setScrollFactor(0.2)
-    );
-
-    // 雲その3
-    bgObjects.push(
-      this.add
-        .ellipse(1100, 70, 100, 50, 0xffffff)
-        .setScrollFactor(0.2)
-    );
+    // ★ 雲（画像を使用）
+    for (let i = 0; i < 20; i++) {
+      const cx = Phaser.Math.Between(0, this.levelWidth);
+      const cy = Phaser.Math.Between(50, 400);
+      const scale = Phaser.Math.FloatBetween(0.1, 0.3); // 小さめに
+      const cloud = this.add.image(cx, cy, "cloud").setScrollFactor(Phaser.Math.FloatBetween(0.1, 0.3));
+      cloud.setScale(scale);
+      cloud.setAlpha(0.9);
+      bgObjects.push(cloud);
+    }
 
     // ぜんぶ「一番うしろ」に送る（プレイヤーや地面より奥）
     bgObjects.forEach((obj) => (obj as Phaser.GameObjects.Image).setDepth(-10));
