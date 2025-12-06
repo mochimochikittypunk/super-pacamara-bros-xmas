@@ -52,12 +52,14 @@ export class TitleScene extends Phaser.Scene {
       color: "#9ca3af"
     }).setOrigin(0.5);
     debugElements.push(debugLabel);
-
+    // デバッグ用: ステージへのショートカット
+    // ボタンとして並べる
     const stages = [
       { label: "1", scene: "GameScene" },
       { label: "2", scene: "GameScene2" },
       { label: "3", scene: "GameScene3" },
-      { label: "4", scene: "GameScene4" }
+      { label: "4", scene: "GameScene4" },
+      { label: "5", scene: "GameScene5" },
     ];
 
     stages.forEach((st, index) => {

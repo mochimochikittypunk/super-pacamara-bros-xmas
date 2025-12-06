@@ -92,7 +92,7 @@ export class GameScene2 extends Phaser.Scene {
 
     // ★ 山（画像を使用・疎らに配置）
     for (let x = 200; x < this.levelWidth; x += Phaser.Math.Between(800, 1200)) {
-      const mountain = this.add.image(x, height + 50, "mountain")
+      const mountain = this.add.image(x, height, "mountain") // height - 10 -> height
         .setOrigin(0.5, 1)
         .setScale(0.2)
         .setScrollFactor(0.15)
@@ -117,10 +117,11 @@ export class GameScene2 extends Phaser.Scene {
     }
 
     // ★ 雲（画像を使用）
-    for (let i = 0; i < 20; i++) {
+    const cloudCount = Phaser.Math.Between(5, 8);
+    for (let i = 0; i < cloudCount; i++) {
       const cx = Phaser.Math.Between(0, this.levelWidth);
-      const cy = Phaser.Math.Between(50, 400);
-      const scale = Phaser.Math.FloatBetween(0.1, 0.3);
+      const cy = Phaser.Math.Between(50, 200);
+      const scale = Phaser.Math.FloatBetween(0.1, 0.15);
       const cloud = this.add.image(cx, cy, "cloud").setScrollFactor(Phaser.Math.FloatBetween(0.1, 0.3));
       cloud.setScale(scale);
       cloud.setAlpha(0.9);

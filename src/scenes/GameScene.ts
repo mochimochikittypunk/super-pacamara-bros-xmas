@@ -92,10 +92,10 @@ export class GameScene extends Phaser.Scene {
     // ★ 山（画像を使用・疎らに配置）
     // "ちょこん"とした山を表現するため、間隔を広くし、少しランダムに配置
     for (let x = 200; x < this.levelWidth; x += Phaser.Math.Between(800, 1200)) {
-      const mountain = this.add.image(x, height + 50, "mountain") // 少し沈める
-        .setOrigin(0.5, 1) // 下中央基準
-        .setScale(0.2) // さらに少し小さく
-        .setScrollFactor(0.15) // より遠景としてゆっくり動かす
+      const mountain = this.add.image(x, height, "mountain") // height - 10 -> height (さらに10px下げる)
+        .setOrigin(0.5, 1)
+        .setScale(0.2)
+        .setScrollFactor(0.15)
         .setDepth(-20);
 
       bgObjects.push(mountain);
@@ -117,10 +117,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     // ★ 雲（画像を使用）
-    for (let i = 0; i < 20; i++) {
+    const cloudCount = Phaser.Math.Between(5, 8);
+    for (let i = 0; i < cloudCount; i++) {
       const cx = Phaser.Math.Between(0, this.levelWidth);
-      const cy = Phaser.Math.Between(50, 400);
-      const scale = Phaser.Math.FloatBetween(0.1, 0.3); // 小さめに
+      const cy = Phaser.Math.Between(50, 200); // 上部に配置
+      const scale = Phaser.Math.FloatBetween(0.1, 0.15); // サイズ比率 1:8 程度（小さめ）
       const cloud = this.add.image(cx, cy, "cloud").setScrollFactor(Phaser.Math.FloatBetween(0.1, 0.3));
       cloud.setScale(scale);
       cloud.setAlpha(0.9);

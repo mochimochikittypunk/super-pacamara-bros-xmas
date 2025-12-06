@@ -19,12 +19,8 @@ export class GameScene4 extends Phaser.Scene {
     private beans!: Phaser.Physics.Arcade.Group;
     private goal!: Phaser.Physics.Arcade.Sprite;
 
-    // ★ 新ギミック用
     private questionBox!: Phaser.Physics.Arcade.Sprite;
-    private keyItem!: Phaser.Physics.Arcade.Sprite;
-    private hasKey = false;
-    private isKeySpawned = false;
-    private keyIcon!: Phaser.GameObjects.Image; // UI表示用
+    // Key related vars removed
 
     private touchControls!: TouchControls;
 
@@ -57,8 +53,8 @@ export class GameScene4 extends Phaser.Scene {
         this.lives = data.lives ?? 3;
         this.hp = data.hp ?? 2;
         this.beansCollected = data.beans ?? 0;
-        this.hasKey = false;
-        this.isKeySpawned = false;
+        this.beansCollected = data.beans ?? 0;
+        // hasKey, isKeySpawned removed
     }
 
     preload() {
@@ -82,8 +78,9 @@ export class GameScene4 extends Phaser.Scene {
 
         // ★ ギミック
         this.load.image("questionBox", "/assets/question_box.png");
-        this.load.image("key", "/assets/key1.png");
-
+        // key removed
+        this.load.image("castle", "/assets/castle.png"); // 城
+        this.load.image("empty", "/assets/Platform.png"); // 透明用ダミー（なければ適当な画像で代用可、今回は使わずsetAlpha(0)でもOK）
         // BGM
         this.load.audio("bgmMain", "/assets/bgm_main.mp3");
     }
@@ -102,7 +99,7 @@ export class GameScene4 extends Phaser.Scene {
 
         // ★ 山（画像を使用・疎らに配置）
         for (let x = 200; x < this.levelWidth; x += Phaser.Math.Between(800, 1200)) {
-            const mountain = this.add.image(x, height + 50, "mountain")
+            const mountain = this.add.image(x, height - 10, "mountain") // height - 20 -> height - 10
                 .setOrigin(0.5, 1)
                 .setScale(0.2)
                 .setScrollFactor(0.15)
@@ -112,11 +109,12 @@ export class GameScene4 extends Phaser.Scene {
         }
 
         // 雲（画像を使用）
-        for (let i = 0; i < 20; i++) {
+        const cloudCount = Phaser.Math.Between(5, 8);
+        for (let i = 0; i < cloudCount; i++) {
             const cx = Phaser.Math.Between(0, this.levelWidth);
-            const cy = Phaser.Math.Between(50, 400);
+            const cy = Phaser.Math.Between(50, 200);
             // 元画像が大きい(1024x1024)ので、縮小して使う
-            const scale = Phaser.Math.FloatBetween(0.1, 0.3); // 0.1(100px) ~ 0.3(300px) くらい
+            const scale = Phaser.Math.FloatBetween(0.1, 0.15); // 0.1(100px) ~ 0.3(300px) くらい
             const cloud = this.add.image(cx, cy, "cloud").setScrollFactor(Phaser.Math.FloatBetween(0.1, 0.3));
             cloud.setScale(scale);
             cloud.setAlpha(0.8);
@@ -191,11 +189,10 @@ export class GameScene4 extends Phaser.Scene {
         this.questionBox.setDisplaySize(48, 48); // 少し大きめ
         this.questionBox.refreshBody();
 
-        // ▼ 鍵（最初は非表示）
-        this.keyItem = this.physics.add.sprite(boxX, boxY, "key");
-        this.keyItem.setDisplaySize(48, 48);
-        this.keyItem.setVisible(false);
-        this.keyItem.disableBody(true, true); // 物理判定もオフ
+        // ▼ 鍵（最初は非表示） -> 削除、FakeBoxは無限なので特別な初期化不要
+        this.questionBox.setDisplaySize(48, 48); // 少し大きめ
+        this.questionBox.refreshBody();
+        // this.questionBox.setData("isOpened", false); // 無限なのでフラグ不要
 
         // ▼ プレイヤー
         this.player = this.physics.add
@@ -236,12 +233,14 @@ export class GameScene4 extends Phaser.Scene {
         this.beans = this.physics.add.group({ allowGravity: false, immovable: true });
         this.spawnBeans(height);
 
-        // ▼ ゴール
         this.goal = this.physics.add
             .sprite(this.levelWidth - 100, height - 120, "tree")
             .setImmovable(true);
         this.goal.setDisplaySize(80, 200);
         (this.goal.body as Phaser.Physics.Arcade.Body).allowGravity = false;
+
+        // ゴール判定用の領域を少し手前に広げる（お城の入り口付近で反応させる）
+        // x座標判定ではなくoverlapを使う形式に変更するため、collider設定を確認
 
         // ▼ 衝突判定
         this.physics.add.collider(this.player, this.platforms, () => {
@@ -250,13 +249,12 @@ export class GameScene4 extends Phaser.Scene {
         });
         this.physics.add.collider(this.enemiesSlow, this.platforms);
         this.physics.add.collider(this.enemiesGreen, this.platforms);
-        this.physics.add.collider(this.player, this.goal, this.handleGoal, undefined, this);
+        this.physics.add.overlap(this.player, this.goal, this.handleGoal, undefined, this);
 
         // ハテナブロックとの衝突（下から叩く判定）
         this.physics.add.collider(this.player, this.questionBox, this.handleBoxHit, undefined, this);
 
-        // 鍵とのオーバーラップ
-        this.physics.add.overlap(this.player, this.keyItem, this.collectKey, undefined, this);
+        // 鍵とのオーバーラップ削除
 
         this.physics.add.collider(this.player, this.enemiesSlow, this.handlePlayerEnemyCollision, undefined, this);
         this.physics.add.collider(this.player, this.enemiesGreen, this.handlePlayerEnemyCollision, undefined, this);
@@ -276,16 +274,15 @@ export class GameScene4 extends Phaser.Scene {
         // UI
         this.createHUD();
 
-        // 鍵UI（最初は半透明）
-        this.keyIcon = this.add.image(width / 2, 40, "key")
-            .setScrollFactor(0)
-            .setScale(1.5)
-            .setAlpha(0.3); // 未取得状態
+        // 鍵UI削除
 
         // BGM
         this.bgm = this.sound.add("bgmMain", { volume: 0.5, loop: true });
         this.bgm.play();
     }
+
+    // クリア演出中フラグ削除
+
 
     private spawnBeans(height: number) {
         for (let i = 0; i < 20; i++) {
@@ -410,55 +407,37 @@ export class GameScene4 extends Phaser.Scene {
         const bBody = box.body as Phaser.Physics.Arcade.Body;
 
         // プレイヤーが下から衝突した場合
-        if (pBody.touching.up && bBody.touching.down && !this.isKeySpawned) {
-            this.spawnKey();
+        // ニセモノBOX（無限）
+        if (pBody.touching.up && bBody.touching.down) {
+            this.spawnBeanFromBox(box);
         }
     }
 
-    private spawnKey() {
-        this.isKeySpawned = true;
+    private spawnBeanFromBox(box: Phaser.Physics.Arcade.Sprite) {
+        // isOpenedチェックなし（無限）
 
         // ブロックが跳ねる演出
         this.tweens.add({
-            targets: this.questionBox,
-            y: this.questionBox.y - 10,
+            targets: box,
+            y: box.y - 10,
             yoyo: true,
             duration: 100
         });
 
-        // 鍵が出現
-        this.keyItem.enableBody(true, this.questionBox.x, this.questionBox.y - 48, true, true);
-        this.keyItem.setVisible(true);
+        // 豆が出現
+        const bean = this.beans.create(box.x, box.y - 48, "bean");
+        bean.setDisplaySize(24, 24);
+        bean.setCircle(10);
+        bean.setVelocityY(-200); // シンプルな飛び出し
+        (bean.body as Phaser.Physics.Arcade.Body).setAllowGravity(true);
+        bean.setBounce(0.5);
+        bean.setCollideWorldBounds(true);
+        this.physics.add.collider(bean, this.platforms);
 
-        // 鍵が飛び出す演出
-        this.keyItem.setVelocityY(-300);
-        // その後重力で落ちてくる（地面で止まるようにcollider必要かもだが、今回は空中に浮遊させておく）
-        (this.keyItem.body as Phaser.Physics.Arcade.Body).setAllowGravity(false); // 浮いたままにする
-
-        this.tweens.add({
-            targets: this.keyItem,
-            y: this.keyItem.y - 60,
-            duration: 500,
-            yoyo: true,
-            repeat: -1
-        });
-
-        this.showMessage("鍵が出現！");
+        this.showMessage("パカマラ！");
     }
 
-    private collectKey(player: any, key: any) {
-        if (this.hasKey) return;
-
-        key.destroy();
-        this.hasKey = true;
-
-        // UI更新
-        this.keyIcon.setAlpha(1);
-        this.keyIcon.setTint(0xffff00); // 輝く
-
-        this.showMessage("鍵をゲット！");
-        // sound.play削除
-    }
+    // spawnKey, collectKey removed
 
     private showMessage(text: string) {
         this.messageText.setText(text);
@@ -518,14 +497,11 @@ export class GameScene4 extends Phaser.Scene {
     }
 
     private handleGoal() {
-        if (!this.hasKey) {
-            this.showMessage("鍵が必要です！");
-            // 少し押し返す
-            this.player.setVelocityX(-200);
-            return;
-        }
+        // 鍵チェック削除
+        // if (!this.hasKey) { ... }
 
         this.bgm?.stop();
-        this.scene.start("ClearSceneSimple", { beans: this.beansCollected, totalBeans: this.totalBeans });
+        // ステージクリア -> ステージ5へ
+        this.scene.start("GameScene5");
     }
 }
