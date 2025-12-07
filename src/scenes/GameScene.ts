@@ -488,11 +488,13 @@ export class GameScene extends Phaser.Scene {
 
     const speed = 200;
     if (moveLeft && !moveRight) {
-      this.player.setVelocityX(-speed);
+      this.player?.setVelocityX(-speed);
+      this.player?.setFlipX(true);
     } else if (moveRight && !moveLeft) {
-      this.player.setVelocityX(speed);
+      this.player?.setVelocityX(speed);
+      this.player?.setFlipX(false);
     } else {
-      this.player.setVelocityX(0);
+      this.player?.setVelocityX(0);
     }
 
     const jumpInput =

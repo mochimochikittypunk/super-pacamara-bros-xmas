@@ -7,10 +7,11 @@ import { GameScene3 } from "./scenes/GameScene3";
 import { ClearSceneCoupon } from "./scenes/ClearSceneCoupon";
 import { ClearSceneSimple } from "./scenes/ClearSceneSimple";
 import { GameOverScene } from "./scenes/GameOverScene";
-import { LogoScene } from "./scenes/LogoScene"; // ★ これを追加
+import { LogoScene } from "./scenes/LogoScene";
 import { GameScene4 } from "./scenes/GameScene4";
-import { GameScene5 } from "./scenes/GameScene5"; // ★
+import { GameScene5 } from "./scenes/GameScene5";
 import { LoadingScene } from "./scenes/LoadingScene";
+import { UndergroundScene } from "./scenes/UndergroundScene";
 
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 450;
@@ -32,15 +33,20 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false
     }
   },
-  scene: [TitleScene, LogoScene, GameScene,
+  scene: [
+    TitleScene,
+    LogoScene,
+    GameScene,
     GameScene2,
     GameScene3,
-    LoadingScene, // 3->4の間
+    LoadingScene,
     GameScene4,
-    GameScene5, // ★
+    GameScene5,
+    UndergroundScene, // ★ Added
     ClearSceneSimple,
     ClearSceneCoupon,
-    GameOverScene] // ★ GameScene3 追加
+    GameOverScene
+  ]
 };
 
 new Phaser.Game(config);

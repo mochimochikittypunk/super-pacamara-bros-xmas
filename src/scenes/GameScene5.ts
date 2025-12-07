@@ -47,6 +47,10 @@ export class GameScene5 extends Phaser.Scene {
     private goldBeanItem!: Phaser.Physics.Arcade.Sprite;
     private isGoldBeanSpawned = false;
 
+    // Pipes
+    private pipe1!: Phaser.Physics.Arcade.Sprite; // To Underground
+    private pipe2!: Phaser.Physics.Arcade.Sprite; // From Underground
+
     private touchControls!: TouchControls;
 
     private bgm?: Phaser.Sound.BaseSound;
@@ -65,13 +69,19 @@ export class GameScene5 extends Phaser.Scene {
     // Input
     private spaceKey?: Phaser.Input.Keyboard.Key;
 
-    init(data: GameSceneData) {
+    private fromUnderground = false; // Flag to check warp return
+    private visitedUnderground = false; // Flag to prevent re-entry
+
+    init(data: GameSceneData & { fromUnderground?: boolean, visitedUnderground?: boolean, hasGoldBean?: boolean }) {
         this.lives = data.lives ?? 3;
         this.hp = data.hp ?? 2;
         this.beansCollected = data.beans ?? 0;
-        this.beansCollected = data.beans ?? 0;
-        // hasKey, isKeySpawned removed
-        this.hasGoldBean = false;
+        this.fromUnderground = data.fromUnderground ?? false;
+        this.visitedUnderground = data.visitedUnderground ?? (this.fromUnderground ? true : false);
+
+        // Restore Gold Bean state
+        // If passed in data, use it. Otherwise default to false.
+        this.hasGoldBean = data.hasGoldBean ?? false;
         this.isGoldBeanSpawned = false;
     }
 
@@ -99,6 +109,7 @@ export class GameScene5 extends Phaser.Scene {
         this.load.image("questionBox", "/assets/question_box.png");
         // key removed
         this.load.image("goldBean", "/assets/gold_bean.png"); // 新しいアセット
+        this.load.image("pipe", "/assets/pipe.png"); // 土管
         this.load.image("castle", "/assets/castle.png"); // 城       // BGM
         this.load.audio("bgmMain", "/assets/bgm_main.mp3");
     }
@@ -206,8 +217,18 @@ export class GameScene5 extends Phaser.Scene {
         this.createPyramid(4200, height - 64, 5);
 
         // ▼ プレイヤー
+        // Check spawn point
+        let spawnX = 100;
+        let spawnY = height - 150;
+        if (this.fromUnderground) {
+            // Spawn at Pipe 2 (x=2100)
+            spawnX = 2100;
+            spawnY = height - 200; // Above pipe
+            this.fromUnderground = false; // Reset flag
+        }
+
         this.player = this.physics.add
-            .sprite(100, height - 150, "player")
+            .sprite(spawnX, spawnY, "player")
             .setCollideWorldBounds(true);
         (this.player.body as Phaser.Physics.Arcade.Body).setSize(32, 64);
 
@@ -246,6 +267,12 @@ export class GameScene5 extends Phaser.Scene {
         // ★ 鍵ブロック（難所の後）だった場所
         const goldBox = this.createQuestionBox(3750, height - 350, "goldBean");
 
+        // Restore Box State if already collected
+        if (this.hasGoldBean) {
+            goldBox.setData("isOpened", true);
+            goldBox.setTint(0x888888); // Opened visual
+        }
+
         // ▼ Golden Bean（最初は非表示）
         // ボックスの位置に生成
         this.goldBeanItem = this.physics.add.sprite(goldBox.x, goldBox.y, "goldBean");
@@ -253,6 +280,21 @@ export class GameScene5 extends Phaser.Scene {
         this.goldBeanItem.setVisible(false);
         this.goldBeanItem.setDepth(10); // 手前に表示
         this.goldBeanItem.disableBody(true, true); // 物理無効化
+
+        // ▼ 土管 1 (Golden PacamaraGet後、ゴール手前)
+        // x=3750 (GoldBox) ... x=4200 (Pyramid)
+        // x=4000 あたりに配置
+        // Original: 19x32 -> 1.5x: 29x48 -> Further 2x: 58x96
+        this.pipe1 = this.platforms.create(4000, height - 32 - 30, "pipe"); // Position kept same
+        this.pipe1.setOrigin(0.5, 1);
+        this.pipe1.setDisplaySize(58, 96); // 2x of previous size
+        this.pipe1.refreshBody(); // StaticGroupの一部として追加するので当たり判定は自動
+
+        // ▼ 土管 2 (前半)
+        this.pipe2 = this.platforms.create(2100, height - 32 - 30, "pipe");
+        this.pipe2.setOrigin(0.5, 1);
+        this.pipe2.setDisplaySize(58, 96); // Same size as Pipe 1
+        this.pipe2.refreshBody();
 
         // ▼ 豆
         this.beans = this.physics.add.group({ allowGravity: false, immovable: true });
@@ -373,9 +415,15 @@ export class GameScene5 extends Phaser.Scene {
         const moveRight = this.cursors!.right?.isDown || this.touchControls.rightPressed;
         const speed = 200;
 
-        if (moveLeft && !moveRight) this.player!.setVelocityX(-speed);
-        else if (moveRight && !moveLeft) this.player!.setVelocityX(speed);
-        else this.player!.setVelocityX(0);
+        if (moveLeft && !moveRight) {
+            this.player?.setVelocityX(-speed);
+            this.player?.setFlipX(true);
+        } else if (moveRight && !moveLeft) {
+            this.player?.setVelocityX(speed);
+            this.player?.setFlipX(false);
+        } else {
+            this.player?.setVelocityX(0);
+        }
 
         const jumpInput = this.spaceKey?.isDown || this.cursors?.up?.isDown || this.touchControls.jumpPressed;
         if (jumpInput && !this.prevJumpPressed) this.handleJump();
@@ -383,8 +431,36 @@ export class GameScene5 extends Phaser.Scene {
 
         // Debug: Down input
         if (this.cursors?.down?.isDown || this.touchControls.downPressed) {
-            // Future implementation: Warp to underground
-            // console.log("Down pressed");
+            // Warp Check (Pipe 1)
+            const playerBody = this.player!.body as Phaser.Physics.Arcade.Body;
+            const pipeBody = this.pipe1.body as Phaser.Physics.Arcade.StaticBody;
+
+            // Check if player is on top of Pipe 1
+            // 1. Horizontal overlap (allow some margin, e.g. 20px from center)
+            const pCenter = playerBody.center.x;
+            const pipeCenter = pipeBody.center.x;
+            const hDiff = Math.abs(pCenter - pipeCenter);
+
+            // 2. Vertical touching (Player bottom ~ Pipe top)
+            // Allow small threshold (e.g. 5px)
+            const vDiff = Math.abs(playerBody.bottom - pipeBody.top);
+
+            // Ensure player is effectively "on" the pipe
+            const onPipe1 = hDiff < 30 && vDiff < 5;
+
+            // One-time entry check
+            if (onPipe1 && !this.visitedUnderground) {
+                if (this.hasGoldBean) {
+                    this.scene.start("UndergroundScene", {
+                        lives: this.lives,
+                        hp: this.hp,
+                        beans: this.beansCollected,
+                        hasGoldBean: this.hasGoldBean // Pass state to Underground
+                    });
+                } else {
+                    this.showMessage("ゴールドパカマラをゲットしよう！");
+                }
+            }
         }
 
         this.isOnGround = (this.player!.body as Phaser.Physics.Arcade.Body).blocked.down;
@@ -462,6 +538,9 @@ export class GameScene5 extends Phaser.Scene {
         if (pBody.touching.up && bBody.touching.down) {
             const item = box.getData("item");
             if (item === "goldBean") {
+                // Check if already collected
+                if (this.hasGoldBean) return;
+
                 if (!box.getData("isOpened")) {
                     this.spawnGoldBean(box);
                 }

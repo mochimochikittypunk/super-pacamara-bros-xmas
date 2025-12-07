@@ -345,9 +345,15 @@ export class GameScene4 extends Phaser.Scene {
         const moveRight = this.cursors.right?.isDown || this.touchControls.rightPressed;
         const speed = 200;
 
-        if (moveLeft && !moveRight) this.player.setVelocityX(-speed);
-        else if (moveRight && !moveLeft) this.player.setVelocityX(speed);
-        else this.player.setVelocityX(0);
+        if (moveLeft && !moveRight) {
+            this.player?.setVelocityX(-speed);
+            this.player?.setFlipX(true);
+        } else if (moveRight && !moveLeft) {
+            this.player?.setVelocityX(speed);
+            this.player?.setFlipX(false);
+        } else {
+            this.player?.setVelocityX(0);
+        }
 
         const jumpInput = this.spaceKey.isDown || this.cursors.up?.isDown || this.touchControls.jumpPressed;
         if (jumpInput && !this.prevJumpPressed) this.handleJump();
