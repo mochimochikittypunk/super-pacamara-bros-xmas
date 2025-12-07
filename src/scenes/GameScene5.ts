@@ -295,7 +295,7 @@ export class GameScene5 extends Phaser.Scene {
         // 入力
         this.cursors = this.input.keyboard!.createCursorKeys();
         this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        this.touchControls = new TouchControls(this);
+        this.touchControls = new TouchControls(this, { enableDown: true });
         this.touchControls.create();
 
         // UI
@@ -380,6 +380,12 @@ export class GameScene5 extends Phaser.Scene {
         const jumpInput = this.spaceKey?.isDown || this.cursors?.up?.isDown || this.touchControls.jumpPressed;
         if (jumpInput && !this.prevJumpPressed) this.handleJump();
         this.prevJumpPressed = jumpInput;
+
+        // Debug: Down input
+        if (this.cursors?.down?.isDown || this.touchControls.downPressed) {
+            // Future implementation: Warp to underground
+            // console.log("Down pressed");
+        }
 
         this.isOnGround = (this.player!.body as Phaser.Physics.Arcade.Body).blocked.down;
         if (this.isOnGround && (this.player!.body as Phaser.Physics.Arcade.Body).velocity.y >= 0) this.jumpCount = 0;

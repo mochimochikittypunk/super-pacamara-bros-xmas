@@ -11,15 +11,21 @@ export class TouchControls {
   public leftPressed = false;
   public rightPressed = false;
   public jumpPressed = false;
+  public downPressed = false; // 新しい操作: 下ボタン
 
   // スライド操作用の状態管理
   private movePointerId: number | null = null;
   private moveStartX = 0;
   // ジャンプ操作用の状態管理（追加）
   private jumpPointerId: number | null = null;
+  // 下ボタン操作用
+  private downPointerId: number | null = null;
 
-  constructor(scene: Phaser.Scene) {
+  private config: { enableDown?: boolean } = {};
+
+  constructor(scene: Phaser.Scene, config?: { enableDown?: boolean }) {
     this.scene = scene;
+    this.config = config || {};
   }
 
   create() {
@@ -57,6 +63,18 @@ export class TouchControls {
     this.scene.add.text(width - padding, height - padding, "J", { fontSize: "40px", color: "#ffffff" })
       .setScrollFactor(0).setDepth(101).setOrigin(0.5);
 
+    // 下ボタンガイド (有効な場合のみ)
+    if (this.config.enableDown) {
+      // Jボタン(width - padding)の左隣
+      // padding = 60, radius = 40. J center ~ width-60.
+      // Left of J = width - 60 - 40 - 20 - 40 = width - 160 (approx)
+      const downX = width - padding - 100; // 少し離す
+      this.scene.add.circle(downX, height - padding, buttonRadius, 0x3b82f6, alpha) // 青色
+        .setScrollFactor(0).setDepth(100);
+      this.scene.add.text(downX, height - padding, "↓", { fontSize: "40px", color: "#ffffff" })
+        .setScrollFactor(0).setDepth(101).setOrigin(0.5);
+    }
+
 
     // --- 判定エリア（不可視） ---
 
@@ -73,6 +91,18 @@ export class TouchControls {
       .setScrollFactor(0)
       .setDepth(200)
       .setInteractive();
+
+    // 3. 下ボタンエリア (有効な場合のみ、Jumpより手前)
+    let downZone: Phaser.GameObjects.Zone | null = null;
+    if (this.config.enableDown) {
+      const downX = width - padding - 100;
+      // 半径40だが、判定は少し広めに (80x80 -> 100x100)
+      downZone = this.scene.add.zone(downX, height - padding, 100, 100)
+        .setOrigin(0.5, 0.5)
+        .setScrollFactor(0)
+        .setDepth(210) // JumpZoneより手前
+        .setInteractive();
+    }
 
     // --- イベント処理 ---
 
@@ -123,6 +153,27 @@ export class TouchControls {
     jumpZone.on("pointerup", resetJump);
     jumpZone.on("pointerout", resetJump);
     jumpZone.on("pointercancel", resetJump);
+
+    // 下ボタンロジック
+    if (downZone && this.config.enableDown) {
+      downZone.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+        if (this.downPointerId === null) {
+          this.downPointerId = pointer.id;
+          this.downPressed = true;
+        }
+      });
+
+      const resetDown = (pointer: Phaser.Input.Pointer) => {
+        if (pointer.id === this.downPointerId) {
+          this.downPointerId = null;
+          this.downPressed = false;
+        }
+      };
+
+      downZone.on("pointerup", resetDown);
+      downZone.on("pointerout", resetDown);
+      downZone.on("pointercancel", resetDown);
+    }
   }
 
   // X座標に基づいて移動方向を更新
