@@ -10,8 +10,10 @@ import { GameOverScene } from "./scenes/GameOverScene";
 import { LogoScene } from "./scenes/LogoScene";
 import { GameScene4 } from "./scenes/GameScene4";
 import { GameScene5 } from "./scenes/GameScene5";
+import { GameScene6 } from "./scenes/GameScene6";
 import { LoadingScene } from "./scenes/LoadingScene";
 import { UndergroundScene } from "./scenes/UndergroundScene";
+import { UndergroundScene6 } from "./scenes/UndergroundScene6";
 
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 450;
@@ -42,7 +44,9 @@ const config: Phaser.Types.Core.GameConfig = {
     LoadingScene,
     GameScene4,
     GameScene5,
+    GameScene6,
     UndergroundScene, // ★ Added
+    UndergroundScene6,
     ClearSceneSimple,
     ClearSceneCoupon,
     GameOverScene

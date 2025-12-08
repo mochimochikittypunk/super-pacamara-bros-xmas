@@ -197,14 +197,14 @@ export class UndergroundScene extends Phaser.Scene {
 
     private handlePipeExit(player: any, zone: any) {
         // Return to Stage 5
+        this.sound.stopAll(); // Stop Underground BGM
         this.scene.start("GameScene5", {
-            lives: this.requestData?.lives ?? 3, // Keep lives (or update if stored in scene prop)
+            lives: this.requestData?.lives ?? 3,
             hp: this.requestData?.hp ?? 2,
-            beans: this.beansCollected,
-            beans: this.beansCollected,
-            fromUnderground: true, // Flag to spawn at Pipe 2
-            visitedUnderground: true, // Confirm visited state
-            hasGoldBean: this.requestData?.hasGoldBean ?? false // Maintain state
+            beans: this.beansCollected, // collected count
+            fromUnderground: true,
+            visitedUnderground: true,
+            hasGoldBean: this.requestData?.hasGoldBean ?? false
         });
     }
 

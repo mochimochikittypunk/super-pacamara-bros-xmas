@@ -451,11 +451,12 @@ export class GameScene5 extends Phaser.Scene {
             // One-time entry check
             if (onPipe1 && !this.visitedUnderground) {
                 if (this.hasGoldBean) {
+                    this.bgm?.stop(); // Stop BGM before warp
                     this.scene.start("UndergroundScene", {
                         lives: this.lives,
                         hp: this.hp,
                         beans: this.beansCollected,
-                        hasGoldBean: this.hasGoldBean // Pass state to Underground
+                        hasGoldBean: this.hasGoldBean
                     });
                 } else {
                     this.showMessage("ゴールドパカマラをゲットしよう！");
@@ -742,8 +743,11 @@ export class GameScene5 extends Phaser.Scene {
     }
 
     private handleGoal() {
-        // Key check removed
         this.bgm?.stop();
-        this.scene.start("ClearSceneSimple", { beans: this.beansCollected, totalBeans: this.totalBeans });
+        this.scene.start("GameScene6", {
+            lives: this.lives,
+            hp: this.hp,
+            beans: this.beansCollected
+        });
     }
 }

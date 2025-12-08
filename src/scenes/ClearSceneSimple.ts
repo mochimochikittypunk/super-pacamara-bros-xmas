@@ -3,11 +3,13 @@ import Phaser from "phaser";
 type ClearSceneData = {
     beans: number;
     totalBeans: number;
+    nextStage?: string | null;
 };
 
 export class ClearSceneSimple extends Phaser.Scene {
     private beans = 0;
     private totalBeans = 0;
+    private nextStage: string | null = null;
     private clearBgm?: Phaser.Sound.BaseSound;
 
     constructor() {
@@ -17,6 +19,7 @@ export class ClearSceneSimple extends Phaser.Scene {
     init(data: ClearSceneData) {
         this.beans = data.beans ?? 0;
         this.totalBeans = data.totalBeans ?? 20;
+        this.nextStage = data.nextStage ?? null;
     }
 
     preload() {
@@ -144,6 +147,29 @@ export class ClearSceneSimple extends Phaser.Scene {
             this.clearBgm?.stop();
             this.scene.start("TitleScene");
         });
+
+        // Next Stage Button (Only if nextStage is set)
+
+        if (this.nextStage) {
+            const nextBtn = this.add
+                .rectangle(width / 2, height - 120, 200, 50, 0xfacc15)
+                .setInteractive({ useHandCursor: true });
+
+            this.add.text(nextBtn.x, nextBtn.y, "次のステージへ", {
+                fontSize: "20px",
+                color: "#1e293b",
+                fontStyle: "bold"
+            }).setOrigin(0.5);
+
+            nextBtn.on("pointerdown", () => {
+                this.clearBgm?.stop();
+                if (this.nextStage) {
+                    this.scene.start(this.nextStage, {
+                        lives: 3, hp: 2, beans: 0 // Reset or carry over? Usually reset for new stage
+                    });
+                }
+            });
+        }
     }
 
     // サンタ演出
