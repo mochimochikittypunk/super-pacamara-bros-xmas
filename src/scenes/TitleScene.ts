@@ -35,9 +35,27 @@ export class TitleScene extends Phaser.Scene {
 
     // ▼ マウス / タッチで START ボタンを押したとき → LogoScene へ
     startButton.on("pointerdown", () => {
-      this.scene.start("LogoScene");
+      this.scene.start("GameScene", { lives: 3, hp: 2, beans: 0 });
     });
 
+    // === Mini Game Button ===
+    const centerX = width / 2;
+    const miniGameY = height / 2 + 120; // Moved down (was 80)
+
+    // Gradient or Color for Special Button
+    const miniBtn = this.add.rectangle(centerX, miniGameY, 180, 40, 0xfacc15) // Smaller (was 240x50)
+      .setInteractive({ useHandCursor: true });
+
+    this.add.text(centerX, miniGameY, "ミニゲームで遊ぶ", {
+      fontSize: "16px",
+      color: "#000000",
+      fontFamily: "Arial", // Explicit font
+      padding: { x: 5, y: 5 } // Prevent cutting off
+    }).setOrigin(0.5);
+
+    miniBtn.on("pointerdown", () => {
+      this.scene.start("MiniGameIntroScene");
+    });
     // ▼ キーボードの SPACE でも同じく LogoScene へ
     this.input.keyboard?.once("keydown-SPACE", () => {
       this.scene.start("LogoScene");
@@ -45,7 +63,7 @@ export class TitleScene extends Phaser.Scene {
 
     // ▼ デバッグ用：ステージ直接選択ボタン（初期非表示）
     const debugElements: (Phaser.GameObjects.Text | Phaser.GameObjects.Rectangle)[] = [];
-    const debugY = height / 2 + 130;
+    const debugY = height / 2 + 170; // Moved down (was 130)
 
     const debugLabel = this.add.text(width / 2, debugY, "[ Debug: Jump to Stage ]", {
       fontSize: "16px",
@@ -61,6 +79,7 @@ export class TitleScene extends Phaser.Scene {
       { label: "4", scene: "GameScene4" },
       { label: "5", scene: "GameScene5" },
       { label: "6", scene: "GameScene6" },
+      // { label: "S1", scene: "SpecialScene1" }, // Hidden in favor of Official Button
     ];
 
     stages.forEach((st, index) => {

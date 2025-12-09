@@ -1,8 +1,14 @@
 import Phaser from "phaser";
 
 export class GameOverScene extends Phaser.Scene {
+  private returnToTitle = false;
+
   constructor() {
     super("GameOverScene");
+  }
+
+  init(data: { returnToTitle?: boolean }) {
+    this.returnToTitle = !!data.returnToTitle;
   }
 
   create() {
@@ -28,19 +34,27 @@ export class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     retryBtn.on("pointerdown", () => {
-      this.scene.start("GameScene", {
-        lives: 3,
-        hp: 2,
-        beans: 0
-      });
+      if (this.returnToTitle) {
+        this.scene.start("TitleScene");
+      } else {
+        this.scene.start("GameScene", {
+          lives: 3,
+          hp: 2,
+          beans: 0
+        });
+      }
     });
 
     this.input.keyboard?.once("keydown-SPACE", () => {
-      this.scene.start("GameScene", {
-        lives: 3,
-        hp: 2,
-        beans: 0
-      });
+      if (this.returnToTitle) {
+        this.scene.start("TitleScene");
+      } else {
+        this.scene.start("GameScene", {
+          lives: 3,
+          hp: 2,
+          beans: 0
+        });
+      }
     });
   }
 }
